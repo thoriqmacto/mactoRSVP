@@ -13,11 +13,51 @@ License: GPLv3
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Require needed files
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/facebook/php-sdk/src/facebook.php' ); 	// facebook-php-sdk
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-abstract.php' ); 		// mactoRSVP abstract class
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-admin.php' );			// mactoRSVP admin class
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-util.php' ); 			// mactoRSVP utilities class
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP.php' ); 					// mactoRSVP main class
+// Define GLOBAL CONSTANT
+global $wpdb;
+define('TB_EVENT', $wpdb->prefix . 'mactoRSVP_events');
+define('TB_GUEST', $wpdb->prefix . 'mactoRSVP_guests');
+
+// Load Facebook php-sdk
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/facebook/php-sdk/src/facebook.php' ); 	// facebook php-sdk
+
+// Load MactoRSVP_Abstract class
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-abstract.php' ); 		// MactoRSVP_Abstract class
+
+// Load all settings for this plugin
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-config.php' ); 			// MactoRSVP_Config class
+
+// Load MactoRSVP_Event class
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-event.php' );	 		// MactoRSVP_Event class
+
+// Load MactoRSVP_Guest class
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-guest.php' );	 		// MactoRSVP_Guest class
+
+// Load MactoRSVP_Endpoint class
+require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP.php' );					// MactoRSVP class
+
+if ( is_admin() ) {
+	require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-admin.php' );		// MactoRSVP_Admin class
+
+	// Instantiate MactoRSVP_Admin singleton
+	MactoRSVP_Admin::get_object();	
+}
+
+// Instatiate MactoRSVP_Endpoint object here
 
 
+// Define mactoRSVP hook here
+function insert_table(){
+	MactoRSVP_Event::create_tb_event();		
+	MactoRSVP_Guest::create_tb_guest();		
+}
+register_activation_hook( __FILE__, 'insert_table' );
+
+function drop_table(){
+	global $wpdb;
+	$wpdb->query("DROP TABLE IF EXISTS " . TB_EVENT);
+	$wpdb->query("DROP TABLE IF EXISTS " . TB_GUEST);
+}
+register_deactivation_hook( __FILE__, 'drop_table' );
+
+?>

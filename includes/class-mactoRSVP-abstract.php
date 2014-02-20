@@ -5,7 +5,7 @@
  * @package Macto_RSVP_Abstract
  */
 
-if ( ! class_exists( 'Macto_RSVP_Abstract' ) ) :
+if ( ! class_exists( 'MactoRSVP_Abstract' ) ) :
 /*
  * Macto_RSVP Base class
  *
@@ -13,7 +13,7 @@ if ( ! class_exists( 'Macto_RSVP_Abstract' ) ) :
  *
  * @since 1.0.0
  */
-abstract class Macto_RSVP_Abstract {
+abstract class MactoRSVP_Abstract {
 	/**
 	 * Holds singleton objects
 	 *

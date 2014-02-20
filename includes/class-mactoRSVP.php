@@ -14,7 +14,7 @@ if ( ! class_exists( 'MactoRSVP' ) ) :
  *
  * @since 1.0.0
  */
-class MactoRSVP extends Macto_RSVP_Abstract {
+class MactoRSVP extends MactoRSVP_Abstract {
 	/**
 	 * Holds plugin version
 	 *
@@ -22,7 +22,16 @@ class MactoRSVP extends Macto_RSVP_Abstract {
 	 * @const string
 	 */
 	const version = '1.0.0';
-
+	
+	/**
+	 * Holds plugin status
+	 *
+	 * @since 1.0.0
+	 * @access public
+	 * @const string
+	 */
+	const plugin_status = 'development';	
+	
 	/**
 	 * Holds options key
 	 *
@@ -97,7 +106,7 @@ class MactoRSVP extends Macto_RSVP_Abstract {
 	 * @return array Default options
 	 */
 	public static function default_options() {
-		return apply_filters( 'tml_default_options', array(
+		return apply_filters( 'rsvp_default_options', array(
 			'enable_css'     => true,
 			'email_login'    => true,
 			'active_modules' => array()
