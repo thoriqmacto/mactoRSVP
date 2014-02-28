@@ -147,7 +147,7 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	}
 	
 	/**
-	 * Synchronize event to Facebook Graph API (/event_id) call  
+	 * Instanstiate event object from Facebook Graph API (/event_id) call  
 	 *
 	 *
 	 * @since 1.0.0
@@ -156,16 +156,16 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @param string $event_fbid, string $event_fb_app_id, string $event_fb_app_secret 
 	 * @return string FBoauth url 
 	 */
-	protected function _eventSyncUrl($event_fbid, $event_fb_app_id, $event_fb_app_secret){
+	protected function _FBinstance($event_fbid, $event_fb_app_id, $event_fb_app_secret){
 		$config = array(
-			'client_id'		=> $event_fb_app_id,
-			'client_secret'	=> $event_fb_app_secret,
-			'type'			=> 'client_cred'	
+			'appId'					=> $event_fb_app_id,
+			'secret'				=> $event_fb_app_secret,	
+			'allowSignedRequest'	=> FALSE	
 		);		
 		
-		$url = 'https://graph.facebook.com/oauth/' . http_build_query($config, null, '&');				
+		$fb = new Facebook($config);											
 		
-		return $url;	
+		return $fb;	
 	}
 	
 	/**
@@ -254,8 +254,8 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 				'sbtn' 	=> 'yes',
 				'fbid'	=> '249418241902475',
 				'join'	=> '249418241902474',
-				'fbad'	=> '',
-				'fbas'	=> ''	
+				'fbad'	=> '566267770131392',
+				'fbas'	=> '4d2c0f71e9c5aba80765d30d5282014f'	
 			),
 			
 			'event2' => array(
@@ -367,6 +367,13 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		
 	}
 	
+	public static function logoutFB($eventfbid,$fbappid,$fbappsecret){
+		$fb = self::_FBInstance($eventfbid,$fbappid,$fbappsecret);
+		$fb->destroySession();
+		echo '<META HTTP-EQUIV="Refresh" Content="0; URL='.admin_url("admin.php?page=mactoRSVP").'">';
+		return ( empty( $fb->getUser() ) )?'Logout Success':'Logout Failed';
+	}
+	
 	/**
 	 * Print "Sync" Button
 	 *
@@ -374,13 +381,40 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @since 1.0.0
 	 * @access public
 	 *
-	 * @param string $eventfbid,$fbappid,$fbappsecret
+	 * @param string $eventfbid,$fbappid,$fbappsecret,$fbhostid,$redirect
+	 * @return Array Event data
 	 */	
-	public static function printSyncBtn($eventfbid,$fbappid,$fbappsecret){ ?>
-				
-		<a href="<?php echo self::_eventSyncUrl($eventfbid,$fbappid,$fbappsecret); ?>" class="button-primary" >Sync</a>
-							
-    <?php 
+	public static function printSyncBtn($eventfbid,$fbappid,$fbappsecret,$fbhostid,$redirect){								
+		
+		$fb = self::_FBInstance($eventfbid,$fbappid,$fbappsecret);				
+		
+		$params1 = array(
+			'scope' => 'basic_info, user_events',
+			'redirect_uri' => $redirect
+		);
+		
+		$params2 = array("next" => wp_nonce_url(admin_url( 'admin.php?page=mactoRSV&action=logoutFB') ) );
+		
+		$userId = $fb->getUser();
+		
+		$loginUrl = $fb->getLoginUrl($params1);
+		
+		// $logoutUrl = $fb->getLogoutUrl($params2);
+		$logoutUrl = wp_nonce_url(admin_url('admin.php?page=mactoRSVP&action=logoutFB'));				
+		
+		// if( isset( $fbInstance ) && !empty($fbInstance) && $fbInstance == $fbhostid ){
+		if($userId){	
+			try{
+				echo "<button type='submit' class='button-primary'> Sync </button><br /><br />";
+				echo "<a href=" . $logoutUrl . " class='logout button-secondary'>Logout</a>";								
+			} catch(FacebookApiException $e){																
+				echo $e->getType();
+		   	 	echo $e->getMessage();
+				echo "<a href=" . $loginUrl . " class='button-primary'>Login First</a>";				
+			}			
+		}else{			
+			echo "<a href=" . $loginUrl . " class='button-primary'>Login First</a>";
+		}
 	}				
 } 
 endif; // Class exists

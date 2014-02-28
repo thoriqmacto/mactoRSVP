@@ -95,20 +95,14 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	}						
 	
 	/**
-	 * Show link "See Guestlist"  
+	 * Get all guest based on event and RSVP status.  
 	 *
 	 *
 	 * @since 1.0.0
 	 * @access public
 	 */
-	public static function printGuestlistLink(){
-		// If status != "development" create tb_event and dummy data
-		if(MactoRSVP::plugin_status != "development"){
-			self::_create_tb_guest();
-		}else{
-			self::_create_tb_guest();
-			self::_insert_dummy_guest();					
-		}		
+	public static function getGuestList($event_id,$rsvp =''){
+		return self::_getGuestsBasedOnRSVPStatus($event_id,$rsvp);	
 	}
 	
 	/**

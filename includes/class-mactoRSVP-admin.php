@@ -33,7 +33,13 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	protected function load() {
 		add_action( 'admin_init', array( &$this, 'admin_init' ) );
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ), 8 );
+		
+		// Add Ajax wrapper for admin event view
+		add_action('wp_ajax_admin_event_view', array( &$this, 'admin_event_view_loader' ) );
 
+		// Add Ajax wrapper for admin guest view
+		add_action('wp_ajax_admin_guest_view', array( &$this, 'admin_guest_view_loader' ) );		
+		
 		register_uninstall_hook( WP_PLUGIN_DIR . '/mactoRSVP/mactoRSVP.php', array( 'MactoRSVP_Admin', 'uninstall' ) );
 	}
 
@@ -77,6 +83,12 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 		
 		// add backend style
 		add_action( 'admin_print_styles-' . $page, wp_enqueue_style( 'style_backend', plugins_url('../css/style_backend.css', __FILE__) ) );
+		
+		// add backend js
+		add_action('admin_print_scripts-' . $page, wp_enqueue_script( 'js_backend', plugins_url('mactoRSVP/js/admin.js', 'jquery' ) ) );
+		
+		// add thickbox functionality
+		add_thickbox();
 	}
 
 	/**
@@ -92,7 +104,149 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 			$this->install();
 		}
 	}
-
+		
+	/**
+	 * Handler for "View" button ajax request
+	 *
+	 * @since 1.0.0
+	 * @access public
+	 */
+	public static function admin_event_view_loader(){
+		global $wpdb;
+				
+		$evid = $_GET['id'];
+		$event = MactoRSVP_Event::getEventRow('evtid',$evid);
+	?>	
+	<h2>Event Data</h2>
+	<table>
+		<tbody>
+			<tr>
+				<td class="event_key" width="150px">Event db_ID:</td>
+				<td><?php echo $event['event_id'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Name:</td>
+				<td><?php echo $event['event_name'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Type:</td>
+				<td><?php echo $event['event_type'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Privacy:</td>
+				<td><?php echo $event['event_privacy'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Description:</td>
+				<td><?php echo $event['event_desc'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Start Time:</td>
+				<td><?php echo $event['event_start_time'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event End Time:</td>
+				<td><?php echo $event['event_end_time'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Location:</td>
+				<td><?php echo $event['event_location'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Host ID:</td>
+				<td><?php echo $event['event_host_id'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Show Button?</td>
+				<td><?php echo $event['event_show_btn'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event Join?</td>
+				<td><?php echo $event['event_join'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event fb_ID:</td>
+				<td><?php echo $event['event_fb_id'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event fb_app_ID:</td>
+				<td><?php echo $event['event_fb_app_id'] ;?></td>
+			</tr>
+			
+			<tr>
+				<td class="event_key">Event fb_app_secret:</td>
+				<td><?php echo $event['event_fb_app_secret'] ;?></td>
+			</tr>
+		</tbody>
+	</table>
+	<?php	
+		exit();
+	}
+	
+	/**
+	 * Handler for "Details" button in each RSVP status 
+	 *
+	 * @since 1.0.0
+	 * @access public
+	 */
+	public static function admin_guest_view_loader(){
+		global $wpdb;
+				
+		$evid = $_GET['eid'];
+		$status = $_GET['rsvp'];
+		
+		$event = MactoRSVP_Event::getEventRow('evtid',$evid);
+		
+		$fbevid = $event['event_fb_id'];
+		$guests = MactoRSVP_Guest::getGuestList($fbevid,$status);		
+	?>	
+	<h2>Guest <u><?php echo ucwords($status); ?></u> To Event <i>"<?php echo $event['event_name']; ?>"</i></h2>
+	<table>
+		<thead>
+			<tr>
+				<td class="event_key">db_ID</td>
+				<td class="event_key">fb_ID</td>
+				<td class="event_key">fb_Username</td>
+				<td class="event_key">fb_Name</td>
+				<td class="event_key">fb_Profile_Link</td>
+				<td class="event_key">fb_Profpic_url</td>
+				<td class="event_key">hosted_Profpic_url</td>
+			</tr>	
+		</thead>
+		
+		<tbody>
+			<?php foreach($guests as $g): ?>
+				<tr>					
+					<td><?php echo $g['guest_id'] ;?></td>
+					<td><?php echo $g['guest_fb_id'] ;?></td>
+					<td><?php echo $g['guest_fb_uname'] ;?></td>
+					<td><?php echo $g['guest_fb_name'] ;?></td>
+					<td><?php echo $g['guest_fb_link'] ;?></td>
+					
+					<td>
+						<img src="<?php echo $g['guest_fb_pic_link'] ;?>" />
+					</td>
+					<td><?php echo $g['guest_hosted_pic_link'] ;?></td>
+				</tr>		
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	<?php	
+		exit();
+	}
+	
 	/**
 	 * Renders the admin event list page
 	 *
@@ -100,17 +254,51 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	 * @access public
 	 */
 	public static function admin_event_list(){ ?>
-		<div class="wrap">			
-			<?php if( $_GET['action'] != 'delete' ): ?>
+		<div class="wrap">															
+			<?php if( $_GET['action'] == 'delete' ): ?>
+				<div id="event_delete">
+					<h2><?php echo esc_html( __( 'Delete Event', 'macto-rsvp' ) ); ?></h2>
+				
+					<p><?php _e('You are about to delete the following event:','macto-rsvp'); ?></p>				
+				
+					<?php
+						$ev_id = $_GET['id'];
+						$arr = MactoRSVP_Event::getEventRow('evtid',$ev_id);				
+					?>	
+				
+					<ul class="ul-disc">
+						<li><strong>"<?php echo $arr['event_name']; ?>"</strong> created by <em><?php echo $arr['event_host_id']; ?></em></li>
+					</ul>
+				
+					<p><?php _e('Deletion will remove event data permanently.','macto-rsvp'); ?></p>
+				
+					<p><?php _e('Are you sure you wish to delete these event?'); ?></p>
+				
+					<form action="" method="POST" style="display:inline;">				
+						<?php wp_nonce_field('mactoRSVP_del'); ?>
+						<input type="hidden" name="event_del_id" value="<?php echo $ev_id; ?>" />
+						<input type="submit" name="delete" class="button" value="<?php _e('Yes, Delete these event','macto-rsvp'); ?>" />
+					</form>	
+				
+					<form action="<?php echo admin_url('admin.php?page=mactoRSVP') ?>" method="POST" style="display:inline;">				
+						<input type="submit" class="button" value="<?php _e('No, Return me to the event list','macto-rsvp'); ?>" />
+					</form>				
+				</div>													
+			<?php elseif( isset($_REQUEST['delete']) && !empty( $_POST['event_del_id'] ) ): ?>
+				<?php $msg = MactoRSVP_Event::eventDel($_POST['event_del_id']); ?>		
+				<br />
+				<a href="<?php echo admin_url('admin.php?page=mactoRSVP') ; ?>" ><?php _e('Back to Event list page.','macto-rsvp'); ?></a>		
+			<?php else: ?>				
 				<h2>
 					<?php echo esc_html( __( 'All Events', 'macto-rsvp' ) ); ?>
 					<a href="<?php echo admin_url('admin.php?page=mactoRSVP_add'); ?>" class="add-new-h2" >Add Event</a>
 				</h2>
-				
+			
 				<!-- Message -->			
-				<?php ( !empty($msg) )?$msg:''; ?>						
-		
-				<table class="widefat">
+				<?php echo ( !empty( $msg ) ) ? $msg : ''; ?>		
+				<?php // if( !empty( $_GET['action'] ) ){ echo $_GET['action']; } ?>
+			
+				<table id="eventlist" class="widefat">
 					<!-- Table Head Title -->				
 					<thead>
 						<tr class="event_data">
@@ -126,7 +314,7 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 							<th style="width:14%;"><?php _e( 'Status', 'macto-rsvp' ); ?></th>						
 						</tr>
 					</thead>
-			
+		
 					<!-- Table Foot Title -->				
 					<tfoot>
 						<tr class="event_data">
@@ -142,32 +330,40 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 							<th><?php _e( 'Status', 'macto-rsvp' ); ?></th>						
 						</tr>
 					</tfoot>
-			
+		
 					<!-- Table Body -->
 					<tbody>
 						<?php if( !empty(MactoRSVP_Event::get_all_event()) ): ?>
 							<?php $event_data = MactoRSVP_Event::get_all_event(); ?>
-																
+															
 							<?php foreach( $event_data as $ed ): ?>
 								<tr class="event_data">
 									<td class="text_left">
-										<?php MactoRSVP_Event::printSyncBtn($ed['event_fb_id'],$ed['event_fb_app_id'],$ed['event_fb_app_secret'] ); ?>
+										<?php MactoRSVP_Event::printSyncBtn(
+											  	$ed['event_fb_id'],
+												$ed['event_fb_app_id'],
+												$ed['event_fb_app_secret'],
+												$ed['event_host_id'],
+												admin_url('admin.php?page=mactoRSVP') 
+											); 
+										?>
 									</td>
 									<td class="text_left">
 										<?php echo $ed['event_name']; ?>
-								
+							
 										<!-- View | Edit | Delete Menus -->
 										<div class="row-actions">
 											<span class="view">
-												<a href="<?php echo admin_url('admin.php?page=mactoRSVP?id=' . $ed['event_id'] .'&action=view') ?>"
-													title="View details for this Event"> View </a> |
+												<?php $protocol = ( isset( $_SERVER[ 'HTTPS' ] ) ) ? 'https://' : 'http://'; ?>
+												<?php $viewUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_event_view&id=" . $ed['event_id'] ; ?>
+												<a href="<?php echo $viewUrl; ?>&height=400&width=500" class="thickbox" title="View Event Details">View</a> |
 											</span>
-									
+								
 											<span class="edit">
 												<?php $nonc_ed_url = wp_nonce_url( admin_url( 'admin.php?page=mactoRSVP_add&action=edit&id=' . $ed['event_id'] ) ); ?>
 												<a href="<?php echo $nonc_ed_url; ?>" title="Edit this Event informations">Edit</a> |
 											</span>
-									
+								
 											<span class="delete">
 												<?php $nonc_del_url = wp_nonce_url( admin_url( 'admin.php?page=mactoRSVP&action=delete&id=' . $ed['event_id'] ) ); ?>
 												<a href="<?php echo $nonc_del_url; ?>" class="submitdelete" title="Delete this Event">Delete</a>
@@ -176,15 +372,50 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 									</td>
 									<td><?php echo $ed['event_type']; ?></td>
 									<td><?php echo $ed['event_privacy']; ?></td>
-									<td><?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id']); ?></td>
-									<td><?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'not_replied'); ?></td>
-									<td><?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'attending'); ?></td>
-									<td><?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'unsure'); ?></td>
-									<td><?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'declined'); ?></td>
+									
+									<td>
+										<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id']); ?>
+										<br />
+										<?php $invitedUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp="; ?>
+										<a href="<?php echo $invitedUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Invited to Invitation List">Details</a>
+									</td>
+									
+									<td>
+										<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'not_replied'); ?>
+										<br />
+										<?php $noReplyUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=not_replied"; ?>
+										<a href="<?php echo $noReplyUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Doesn't Replied to Invitation List">Details</a>
+									</td>
+									
+									<td>
+										<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'attending'); ?>
+										<br />
+										<?php $attendUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=attending"; ?>
+										<a href="<?php echo $attendUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Attending to Invitation List">Details</a>
+									</td>
+									
+									<td>
+										<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'unsure'); ?>
+										<br />
+										<?php $unsureUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=unsure"; ?>
+										<a href="<?php echo $unsureUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Unsure to come List">Details</a>
+									</td>
+									
+									<td>
+										<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'declined'); ?>
+										<br />
+										<?php $declineUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=declined"; ?>
+										<a href="<?php echo $declineUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Decline to come List">Details</a>
+									</td>
+									
 									<td><?php // MactoRSVP_Event::getEventStatus($ed['event_start_time'], $ed['event_end_time']);	?></td>
 								</tr>
-							<?php endforeach; ?>	
-					
+								
+								<?php if( $_GET['action'] == 'logoutFB' ): ?>
+									<?php $msg = MactoRSVP_Event::logoutFB($ed['event_fb_id'],$ed['event_fb_app_id'],$ed['event_fb_app_secret']); ?>
+								<?php endif;?>	
+								
+							<?php endforeach; ?>														
 						<?php else: ?>
 							<tr>
 								<?php $addone = "<a href='" . admin_url('admin.php?page=mactoRSVP_add') . "' >'Add One'</a>";?>
@@ -193,42 +424,14 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 						<?php endif; ?>	
 					</tbody>
 				</table>
-			<?php elseif( isset($_REQUEST['delete']) && !empty( $_POST['event_del_id'] ) ): ?>
-				<?php $msg = MactoRSVP_Event::eventDel($_POST['event_del_id']); ?>		
-				<br />
-				<a href="<?php echo admin_url('admin.php?page=mactoRSVP') ; ?>" ><?php _e('Back to Event list page.','macto-rsvp'); ?></a>		
 					
-			<?php else: ?>	
-				<h2><?php echo esc_html( __( 'Delete Event', 'macto-rsvp' ) ); ?></h2>
-				
-				<p><?php _e('You are about to delete the following event:','macto-rsvp'); ?></p>				
-				
-				<?php
-					$ev_id = $_GET['id'];
-					$arr = MactoRSVP_Event::getEventRow('evtid',$ev_id);				
-				?>	
-				
-				<ul class="ul-disc">
-					<li><strong>"<?php echo $arr['event_name']; ?>"</strong> created by <em><?php echo $arr['event_host_id']; ?></em></li>
-				</ul>
-				
-				<p><?php _e('Deletion will remove event data permanently.','macto-rsvp'); ?></p>
-				
-				<p><?php _e('Are you sure you wish to delete these event?'); ?></p>
-				
-				<form action="" method="POST" style="display:inline;">				
-					<?php wp_nonce_field('mactoRSVP_del'); ?>
-					<input type="hidden" name="event_del_id" value="<?php echo $ev_id; ?>" />
-					<input type="submit" name="delete" class="button" value="<?php _e('Yes, Delete these event','macto-rsvp'); ?>" />
-				</form>	
-				
-				<form action="<?php echo admin_url('admin.php?page=mactoRSVP') ?>" method="POST" style="display:inline;">				
-					<input type="submit" class="button" value="<?php _e('No, Return me to the event list','macto-rsvp'); ?>" />
-				</form>	
+				<pre>
+					<?php // print_r($_SESSION); ?>					
+				</pre>				
 			<?php endif;?>							
 		</div>
-	<?php }				 	
-
+	<?php }				 			
+	
 	/**
 	 * Renders the admin event add page
 	 *
@@ -363,7 +566,7 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 							<th scope="row"></th>
 							<td>
 								<input type="submit" value="<?php _e('Submit','macto-rsvp'); ?>" name="save" class="button-primary" />
-								<button type="reset" class="button-secondary"><?php _e('Reset','macto-rsvp'); ?></button>
+								<!-- <button type="reset" class="button-secondary"><?php _e('Reset','macto-rsvp'); ?></button> -->
 							</td>
 						</tr>
 					</tbody>

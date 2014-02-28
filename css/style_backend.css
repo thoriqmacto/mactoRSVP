@@ -1,3 +1,7 @@
+td.event_key{
+	font-weight: bold;
+}
+
 tr.event_data td,tr.event_data th {
 	text-align: center;
 }

@@ -19,6 +19,7 @@ define('TB_EVENT', $wpdb->prefix . 'mactoRSVP_events');
 define('TB_GUEST', $wpdb->prefix . 'mactoRSVP_guests');
 
 // Load Facebook php-sdk
+session_start();
 require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/facebook/php-sdk/src/facebook.php' ); 	// facebook php-sdk
 
 // Load MactoRSVP_Abstract class
@@ -42,9 +43,6 @@ if ( is_admin() ) {
 	// Instantiate MactoRSVP_Admin singleton
 	MactoRSVP_Admin::get_object();	
 }
-
-// Instatiate MactoRSVP_Endpoint object here
-
 
 // Define mactoRSVP hook here
 function insert_table(){
