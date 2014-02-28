@@ -1,5 +1,9 @@
-td.event_key{
+td.event_key, thead.guest_key td{
 	font-weight: bold;
+}
+
+tbody.guest_value td{
+	text-align: left;
 }
 
 tr.event_data td,tr.event_data th {

@@ -212,21 +212,21 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 		$fbevid = $event['event_fb_id'];
 		$guests = MactoRSVP_Guest::getGuestList($fbevid,$status);		
 	?>	
-	<h2>Guest <u><?php echo ucwords($status); ?></u> To Event <i>"<?php echo $event['event_name']; ?>"</i></h2>
+	<h2>Guest <u><?php echo !empty( $status ) ? ucwords($status) : ucwords('invited') ?></u> To Event <i>"<?php echo $event['event_name']; ?>"</i></h2>
 	<table>
-		<thead>
+		<thead class="guest_key">
 			<tr>
-				<td class="event_key">db_ID</td>
-				<td class="event_key">fb_ID</td>
-				<td class="event_key">fb_Username</td>
-				<td class="event_key">fb_Name</td>
-				<td class="event_key">fb_Profile_Link</td>
-				<td class="event_key">fb_Profpic_url</td>
-				<td class="event_key">hosted_Profpic_url</td>
+				<td width="5%">db_ID</td>
+				<td width="10%">fb_ID</td>
+				<td width="10%">fb_Username</td>
+				<td width="20%">fb_Name</td>
+				<td width="25%">fb_Profile_Link</td>
+				<td width="15%">fb_Profpic</td>
+				<td width="15%">hosted_Profpic</td>
 			</tr>	
 		</thead>
 		
-		<tbody>
+		<tbody class="guest_value">
 			<?php foreach($guests as $g): ?>
 				<tr>					
 					<td><?php echo $g['guest_id'] ;?></td>
@@ -238,7 +238,9 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 					<td>
 						<img src="<?php echo $g['guest_fb_pic_link'] ;?>" />
 					</td>
-					<td><?php echo $g['guest_hosted_pic_link'] ;?></td>
+					<td>
+						<img src="<?php echo $g['guest_hosted_pic_link'] ;?>" alt="No image">
+					</td>
 				</tr>		
 			<?php endforeach; ?>
 		</tbody>
