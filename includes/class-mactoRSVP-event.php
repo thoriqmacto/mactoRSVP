@@ -12,7 +12,7 @@ if ( ! class_exists( 'MactoRSVP_Event' ) ) :
  *
  * @since 1.0.0
  */
-class MactoRSVP_Event extends MactoRSVP_Abstract {					
+class MactoRSVP_Event extends MactoRSVP_Abstract {
 	/**
 	 * Create Event Tables Wrapper 
 	 *
@@ -45,6 +45,23 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		global $wpdb;
 		
 		$nosync = 'NOTSYNC';
+		
+		$default = array(
+			'evid'	=> esc_attr($evdbid),
+			'name'	=> '',
+			'type' 	=> '',
+			'priv'	=> 'SECRET',
+			'desc'	=> '',
+			'sttm'	=> '',
+			'edtm'	=> '',
+			'eloc'	=> '',
+			'ehid'	=> '',
+			'ebtn'	=> 'yes',			
+			'fbid'	=> '',
+			'evjn'	=> '',
+			'fbad'	=> '',
+			'fbas'	=> ''			
+		);
 		
 		$event = array(
 			'name'	=> esc_attr($ename),
@@ -88,34 +105,58 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @param string $evdbid,$ename,$etype,$fbevid,$fbapid,$fbapsc,$action
 	 * @return string Message 
 	 */
-	public static function eventEdit($evdbid = 0,$ename,$etype,$fbevid,$fbapid,$fbapsc){
-		global $wpdb;		
+	public static function eventEdit($evdbid = 0,$args){
+		return self::_eventEdit($evdbid,$args);			
+	}
+	
+	// protected static function _eventEdit($evdbid = 0,$etype,$fbevid,$fbapid,$fbapsc){
+	protected static function _eventEdit($evdbid, $arrEvent, $printMsg = TRUE){
+		global $wpdb;									
 		
-		$event = array(
-			'name'	=> esc_attr($ename),
-			'type' 	=> esc_attr($etype),
-			'ebtn'	=> 'yes',			
-			'fbid'	=> esc_attr($fbevid),
-			'fbad'	=> esc_attr($fbapid),
-			'fbas'	=> esc_attr($fbapsc),
-			'eid'	=> esc_attr($evdbid)
+		$arrSQL = array(			
+			'name'	=> 'event_name = %s',
+			'type' 	=> 'event_type = %s',
+			'priv'	=> 'event_privacy = %s',
+			'desc'	=> 'event_desc = %s',
+			'sttm'	=> 'event_start_time = %s',
+			'edtm'	=> 'event_end_time = %s',
+			'eloc'	=> 'event_location = %s',
+			'ehid'	=> 'event_host_id = %s',
+			'ebtn'	=> 'event_show_btn = %s',			
+			'fbid'	=> 'event_fb_id = %s',
+			'evjn'	=> 'event_join = %s',
+			'fbad'	=> 'event_fb_app_id = %s',
+			'fbas'	=> 'event_fb_app_secret = %s'
 		);
 		
+		$arrSet = '';
+		
+		foreach($arrEvent as $eKey => $eVal){
+			$arrSet .= $arrSQL[ $eKey ];
+			$arrSet .= ", "; 
+		}
+		
+		$arrSet = substr_replace($arrSet, '', -2, 1);
+		
 		$q = "UPDATE " . TB_EVENT . " 
-			SET event_name = %s, event_type = %s, event_show_btn = %s, event_fb_id = %s, event_fb_app_id = %s, event_fb_app_secret = %s
-			WHERE event_id = %d LIMIT 1";										
+			SET " . $arrSet . "
+			WHERE event_id = %d LIMIT 1";												
 		
-		$query = $wpdb->prepare($q,$event);
+		array_push( $arrEvent, $evdbid );
+				
+		$query = $wpdb->prepare($q,$arrEvent);				
 		
-		$result = $wpdb->query($query);
+		// echo"<pre>";
+		// 	var_dump($query);
+		// echo"</pre>";			
 		
-		// var_dump($result);
-		
-		if($result != FALSE){
-			return parent::printMsg( $event['name'] . " successfully edited", TRUE );
+		$result = $wpdb->query($query);		
+				 
+		if( $result != FALSE && $printMsg != FALSE ){
+			return parent::printMsg( "Event successfully updated", TRUE );
 		}else{
-			return parent::printMsg( "Failed edit event data", FALSE );			
-		}			
+			return parent::printMsg( "Failed update event data", FALSE );			
+		}
 	}
 	
 	/**
@@ -156,7 +197,7 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @param string $event_fbid, string $event_fb_app_id, string $event_fb_app_secret 
 	 * @return string FBoauth url 
 	 */
-	protected function _FBinstance($event_fbid, $event_fb_app_id, $event_fb_app_secret){
+	protected function _FBinstance($event_fb_app_id, $event_fb_app_secret){
 		$config = array(
 			'appId'					=> $event_fb_app_id,
 			'secret'				=> $event_fb_app_secret,	
@@ -367,11 +408,53 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		
 	}
 	
-	public static function logoutFB($eventfbid,$fbappid,$fbappsecret){
-		$fb = self::_FBInstance($eventfbid,$fbappid,$fbappsecret);
+	public static function logoutFB($fbappid,$fbappsecret){
+		$fb = self::_FBInstance($fbappid,$fbappsecret);
 		$fb->destroySession();
 		echo '<META HTTP-EQUIV="Refresh" Content="0; URL='.admin_url("admin.php?page=mactoRSVP").'">';
 		return ( empty( $fb->getUser() ) )?'Logout Success':'Logout Failed';
+	}
+	
+	public static function syncToDB($eventdbid,$arrEvent,$arrGuest){
+		// echo"<pre>";
+		// 	var_dump($arrEvent);
+		// echo"</pre>";
+		$arrEventMap = array(
+			'name' => esc_attr( $arrEvent['event_name'] ),
+			'priv' => esc_attr( $arrEvent['event_privacy'] ),
+			'desc' => esc_attr( $arrEvent['event_desc'] ),
+			'sttm' => esc_attr( $arrEvent['event_start_time'] ),
+			'edtm' => esc_attr( $arrEvent['event_end_time'] ),
+			'eloc' => esc_attr( $arrEvent['event_location'] ),
+			'ehid' => esc_attr( $arrEvent['event_host_id'] )
+		);
+		
+		
+		
+		self::_eventEdit($eventdbid, $arrEventMap, FALSE);
+		
+		return $msg;
+	}
+		
+	protected function _FBeventId($FBeventId,$FBappId,$FBappSecret){
+		$fb = self::_FBInstance($FBappId,$FBappSecret);
+		$data = $fb->api('/'.$FBeventId,'GET');
+		return $data;
+	}
+	
+	protected function _FBguestInvited($FBeventId,$FBappId,$FBappSecret){
+		$fb = self::_FBInstance($FBappId,$FBappSecret);
+		$data = $fb->api('/'.$FBeventId.'?fields=invited','GET');
+		return $data['invited']['data'];
+	}
+	
+	protected function _FBguestInfo($FBuserId,$FBappId,$FBappSecret){
+		$fb = self::_FBInstance($FBappId,$FBappSecret);
+		$data = $fb->api('/'.$FBuserId.'?fields=id,username,name,link','GET');
+		$pic = $fb->api('/'.$FBuserId.'?fields=picture.type(small)','GET');
+		
+		$data = array_merge($data,array( "picture" => $pic['picture']['data']['url'] ) );
+		return $data;	
 	}
 	
 	/**
@@ -384,37 +467,84 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @param string $eventfbid,$fbappid,$fbappsecret,$fbhostid,$redirect
 	 * @return Array Event data
 	 */	
-	public static function printSyncBtn($eventfbid,$fbappid,$fbappsecret,$fbhostid,$redirect){								
+	public static function printSyncBtn($eventfbid,$fbappid,$fbappsecret,$fbhostid,$redirect){
 		
-		$fb = self::_FBInstance($eventfbid,$fbappid,$fbappsecret);				
+		$fb = self::_FBInstance($fbappid,$fbappsecret);				
 		
 		$params1 = array(
 			'scope' => 'basic_info, user_events',
 			'redirect_uri' => $redirect
 		);
 		
-		$params2 = array("next" => wp_nonce_url(admin_url( 'admin.php?page=mactoRSV&action=logoutFB') ) );
-		
 		$userId = $fb->getUser();
 		
 		$loginUrl = $fb->getLoginUrl($params1);
-		
-		// $logoutUrl = $fb->getLogoutUrl($params2);
+				
 		$logoutUrl = wp_nonce_url(admin_url('admin.php?page=mactoRSVP&action=logoutFB'));				
 		
-		// if( isset( $fbInstance ) && !empty($fbInstance) && $fbInstance == $fbhostid ){
 		if($userId){	
-			try{
-				echo "<button type='submit' class='button-primary'> Sync </button><br /><br />";
-				echo "<a href=" . $logoutUrl . " class='logout button-secondary'>Logout</a>";								
-			} catch(FacebookApiException $e){																
-				echo $e->getType();
-		   	 	echo $e->getMessage();
-				echo "<a href=" . $loginUrl . " class='button-primary'>Login First</a>";				
-			}			
+			if( $userId == $fbhostid ){
+				try{
+					$FBevent = self::_FBeventId($eventfbid,$fbappid,$fbappsecret);
+					$FBguests = self::_FBguestInvited($eventfbid,$fbappid,$fbappsecret);
+					
+					foreach($FBguests as $FBguest){
+						$FBguestInfo[ $FBguest['id'] ] = self::_FBguestInfo( $FBguest['id'], $fbappid,$fbappsecret );
+					}
+										
+					self::_printSyncBtn($FBevent,$FBguests,$FBguestInfo);
+					
+					echo "<br />";
+					
+					echo "<a href=" . $logoutUrl . " class='logout button-secondary'>Logout</a>";								
+				} catch(FacebookApiException $e){																
+					echo $e->getType();
+			   	 	echo $e->getMessage();
+					echo "<a href=" . $loginUrl . " class='button-primary'>Login First</a>";				
+				}
+			}else{
+				echo "You can't sync the event, because you are not the Host for the event <br />";
+				echo "Please <a href=" . $logoutUrl . " class='logout'>Logout</a>";
+			}						
 		}else{			
 			echo "<a href=" . $loginUrl . " class='button-primary'>Login First</a>";
 		}
+	}		
+	
+	protected static function _printSyncBtn($arrEvent, $arrGuests, $arrGuestInfo){
+		global $wpdb;
+		
+		$getEvent = self::_getEventRow('efbid',$arrEvent['id']);
+		$eventDbId = $getEvent['event_id'];
+		
+		echo "<form method='post' action='' >";
+			wp_nonce_field('mactoRSVP_sync'); 
+			echo "<input type='hidden' name='mactoRSVP_sync' value='".$arrEvent['id']."' />";
+			echo "<input type='hidden' name='event_db_id' value='".$eventDbId."' />";
+				
+			// EVENT INFORMATION
+			echo "<input type='hidden' name='event_name' value='".$arrEvent['name']."' />";
+			echo "<input type='hidden' name='event_privacy' value='" . $arrEvent['privacy'] . "' />";
+			echo "<input type='hidden' name='event_desc' value='" . $arrEvent['description'] . "' />";
+			echo "<input type='hidden' name='event_start_time' value='" . $arrEvent['start_time'] . "' />";
+			echo "<input type='hidden' name='event_end_time' value='" . $arrEvent['end_time'] . "' />";
+			echo "<input type='hidden' name='event_location' value='" . $arrEvent['location'] . "' />";
+			echo "<input type='hidden' name='event_host_id' value='" . $arrEvent['owner']['id'] . "' />";
+		
+			// GUEST INFORMATION						
+			foreach($arrGuests as $guest){
+				$guestBasic = $arrGuestInfo[ $guest['id'] ];
+				$guestRSVP = $guest['rsvp_status'];
+				
+				$guestAll = array_merge( $guestBasic, array( "rsvp_status" => $guestRSVP ) );
+				// $val = implode('|',$guestAll);
+				$val = serialize($guestAll);
+				echo "<input type='hidden' name='guest_" . $guest['id'] . "' value='" . $val . "' />";
+			}
+			
+			// SYNC BUTTON	
+			echo "<input type='submit' name='sync' class='button-primary' value='Sync' /> ";
+		echo "</form>";		
 	}				
 } 
 endif; // Class exists
