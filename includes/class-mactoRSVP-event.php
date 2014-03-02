@@ -143,19 +143,15 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		
 		array_push( $arrEvent, $evdbid );
 				
-		$query = $wpdb->prepare($q,$arrEvent);				
-		
-		// echo"<pre>";
-		// 	var_dump($query);
-		// echo"</pre>";			
+		$query = $wpdb->prepare($q,$arrEvent);							
 		
 		$result = $wpdb->query($query);		
 		
 		if($printMsg != FALSE){
 			if( $result != FALSE ){
-				return parent::printMsg( "Event successfully updated", TRUE );
+				return parent::printMsg( $arrEvent['name'] . " successfully updated", TRUE );
 			}else{
-				return parent::printMsg( "Failed update event data", FALSE );			
+				return parent::printMsg( "Failed update " . $arrEvent['name'] . " data", FALSE );			
 			}
 		}
 	}
@@ -393,6 +389,20 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		}				
 	}
 	
+	protected function _isEventDataChange($eventDBid,$arrNew){
+		$arrOld = self::_getEventRow('evtid',$eventDBid);		
+		
+		$compare = array_diff($arrNew,$arrOld);
+		
+		// parent::varDump($compare);
+		
+		if( !empty($compare) ){
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	}
+	
 	/**
 	 * Get Event status compare with now() time. 
 	 * 
@@ -411,9 +421,17 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	
 	public static function logoutFB($fbappid,$fbappsecret){
 		$fb = self::_FBInstance($fbappid,$fbappsecret);
-		$fb->destroySession();
+		$fb->destroySession();		
+		
+		if( empty($fb->getUser()) ){ 
+			$msg = parent::printMsg( 'Logout Success', TRUE ); 
+		}else{ 
+			$msg = parent::printMsg( 'Logout Failed', FALSE ); 
+		}				
+		
 		echo '<META HTTP-EQUIV="Refresh" Content="0; URL='.admin_url("admin.php?page=mactoRSVP").'">';
-		return ( empty( $fb->getUser() ) )?'Logout Success':'Logout Failed';
+		
+		return $msg;
 	}
 	
 	public static function syncToDB($eventdbid,$arrEvent,$arrGuest){
@@ -426,16 +444,14 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 			'edtm' => esc_attr( $arrEvent['event_end_time'] ),
 			'eloc' => esc_attr( $arrEvent['event_location'] ),
 			'ehid' => esc_attr( $arrEvent['event_host_id'] )
-		);				
-		
-		$arrGuestKey = array(
-			'gfbid',
-			'gfbun',
-			'gfbnm',
-			'gfbln',
-			'gfbpl',
-			'gfbrs'
 		);
+		
+		if( self::_isEventDataChange($eventdbid, $arrEventMap) ){
+			$msg = self::_eventEdit($eventdbid, $arrEventMap, TRUE);	
+		}				
+		
+	
+		$arrGuestKey = array( 'gfbid', 'gfbun', 'gfbnm', 'gfbln', 'gfbpl', 'gfbrs' );
 		
 		foreach($arrGuest as $key => $val){
 			$guest[$key] = explode('|',$val);			
@@ -445,31 +461,33 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 			}
 			
 			$guest[$key] = $guestInfo;
-		}				
-		
-		$hostUrl = "N/A";
+		}						
+			
 		$eventFBid = $arrEventMap['fbid'];
 		
 		foreach($guest as $key => $val){
 			$guestDB_id = MactoRSVP_Guest::getGuestID($key);
+			
+			$hostUrl = MactoRSVP_Guest::savePicToWP( $val['gfbun'], $val['gfbpl'] );
+			
 			$additional = array( "ghspl" => $hostUrl, "gfbei" => $eventFBid );
 			$val = array_merge($val,$additional);
 						
-			if( MactoRSVP_Guest::isGuestExist($key) ){																								
-				// echo"<pre>";
-				// 	var_dump($additional);
-				// echo"</pre>";
+			if( MactoRSVP_Guest::isGuestExist($key) ){
 				if( MactoRSVP_Guest::isGuestDataChange($guestDB_id, $val) ){					
-					MactoRSVP_Guest::guestUpdate($guestDB_id, $val, FALSE);
+					$msg = MactoRSVP_Guest::guestUpdate($guestDB_id, $val, TRUE);
 				}
 			}else{
 				$msg = MactoRSVP_Guest::guestAdd($key, $val, TRUE);
 			}
-		}			
-			
-		// self::_eventEdit($eventdbid, $arrEventMap, FALSE);
+		}						
 		
-		return $msg;
+		if( !empty( $msg ) ){
+			return $msg;
+		}else{
+			$msg = parent::printMsg( "All data has been synchronized", TRUE );
+			return $msg;
+		}
 	}
 		
 	protected function _FBeventId($FBeventId,$FBappId,$FBappSecret){

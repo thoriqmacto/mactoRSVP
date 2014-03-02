@@ -126,6 +126,12 @@ abstract class MactoRSVP_Abstract {
 		<?php endif; ?>
 	<?php }
 	
+	public function varDump($args){
+		echo "<pre>";
+			var_dump($args);
+		echo "</pre>";
+	}
+	
 	/**
 	 * Saves options to DB
 	 *

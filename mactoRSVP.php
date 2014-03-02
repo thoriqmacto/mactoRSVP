@@ -25,18 +25,16 @@ require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/facebook/php-sdk/src/facebook
 // Load MactoRSVP_Abstract class
 require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-abstract.php' ); 		// MactoRSVP_Abstract class
 
-// Load all settings for this plugin
-require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-config.php' ); 			// MactoRSVP_Config class
-
 // Load MactoRSVP_Event class
 require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-event.php' );	 		// MactoRSVP_Event class
 
 // Load MactoRSVP_Guest class
 require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-guest.php' );	 		// MactoRSVP_Guest class
 
-// Load MactoRSVP_Endpoint class
+// Load MactoRSVP class
 require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP.php' );					// MactoRSVP class
 
+// Load MactoRSVP_Admin class
 if ( is_admin() ) {
 	require_once( WP_PLUGIN_DIR . '/mactoRSVP/includes/class-mactoRSVP-admin.php' );		// MactoRSVP_Admin class
 
@@ -44,7 +42,21 @@ if ( is_admin() ) {
 	MactoRSVP_Admin::get_object();	
 }
 
-// Define mactoRSVP hook here
+if ( ! function_exists( 'mactoRSVP' ) ) :
+/**
+ * Displays baic mactoRSVP instance
+ *
+ * @see MactoRSVP::display() for $args parameters
+ * @since 1.0.0
+ *
+ * @param string|array $args Template tag arguments
+ */
+function mactoRSVP_display( $event_id, $args = '' ) {
+	echo MactoRSVP::get_object()->display( $event_id, wp_parse_args( $args ) );
+}
+endif;
+
+// mactoRSVP hook function
 function insert_table(){
 	MactoRSVP_Event::create_tb_event();		
 	MactoRSVP_Guest::create_tb_guest();		

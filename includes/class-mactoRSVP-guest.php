@@ -74,23 +74,28 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 		}else{
 			switch($rsvp){
 				case 'attending':
-					print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'attending') ) );	
+					// print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'attending') ) );	
+					return count( self::_getGuestsBasedOnRSVPStatus($event_id,'attending') );	
 					break;
 					
 				case 'unsure':
-					print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'unsure') ) );	
+					// print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'unsure') ) );	
+					return count( self::_getGuestsBasedOnRSVPStatus($event_id,'unsure') );
 					break;
 					
 				case 'declined':
-					print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'declined') ) );	
+					// print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'declined') ) );	
+					return count( self::_getGuestsBasedOnRSVPStatus($event_id,'declined') );
 					break;
 					
 				case 'not_replied':
-					print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'not_replied') ) );	
+					// print( count( self::_getGuestsBasedOnRSVPStatus($event_id,'not_replied') ) );	
+					return count( self::_getGuestsBasedOnRSVPStatus($event_id,'not_replied') );
 					break;
 					
 				default:
-					print( count( self::_getGuestsBasedOnRSVPStatus($event_id) ) );	
+					// print( count( self::_getGuestsBasedOnRSVPStatus($event_id) ) );	
+					return count( self::_getGuestsBasedOnRSVPStatus($event_id) );
 			}			
 		}
 	}						
@@ -118,7 +123,9 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	public function isGuestDataChange($guestDBid,$arrNew){
 		$arrOld = self::_getGuestRow('gid',$guestDBid);
 		
-		$compare = array_diff_assoc($arrNew,$arrOld);
+		$compare = array_diff($arrNew,$arrOld);
+		
+		// parent::varDump($compare);
 		
 		if( !empty($compare) ){
 			return TRUE;
@@ -219,17 +226,13 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 				
 		$query = $wpdb->prepare($q,$arrGuest);				
 		
-		// echo"<pre>";
-		// 	var_dump($query);
-		// echo"</pre>";
-		
 		$result = $wpdb->query($query);		
 		
 		if($printMsg != FALSE){
 			if( $result != FALSE ){
-				return parent::printMsg( "Guest successfully updated", TRUE );
+				return parent::printMsg( $arrGuest['gfbnm'] . " successfully updated", TRUE );
 			}else{
-				return parent::printMsg( "Failed update event data", FALSE );			
+				return parent::printMsg( "Failed update " . $arrGuest['gfbnm'] . " data", FALSE );			
 			}
 		}
 	}
@@ -392,6 +395,31 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 		$data = self::_getGuestRow('gfbid',$guestFBid);
 		$guestID = $data['guest_id'];
 		return $guestID;
+	}
+	
+	public function savePicToWP($FBuname, $FBpic){
+		return self::_savePicToWP($FBuname, $FBpic);
+	}
+	
+	protected function _savePicToWP($FBusername, $FBpicURL){
+		
+		if( !class_exists( 'WP_Http' ) ){ include_once( ABSPATH . WPINC. '/class-http.php' ); }
+		
+		$photo = new WP_Http();
+		$photo = $photo->request( $FBpicURL );		
+			
+		if( $photo['response']['code'] != 200 ){ return FALSE; }
+		
+		$attachment = wp_upload_bits( $FBusername . '.jpg', null, $photo['body'], date( "Y-m", strtotime( $photo['headers']['last-modified'] ) ) );
+		
+		// parent::varDump($attachment);
+		
+		if( !empty( $attachment['error'] ) ){ 
+			// return $attachment['error'];
+			return FALSE; 
+		}else{
+			return $attachment['url'];
+		}				
 	}
 	
 	/**

@@ -408,35 +408,35 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 							<td><?php echo $ed['event_privacy']; ?></td>
 							
 							<td>
-								<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id']); ?>
+								<?php echo MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id']); ?>
 								<br />
 								<?php $invitedUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp="; ?>
 								<a href="<?php echo $invitedUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Invited to Invitation List">Details</a>
 							</td>
 							
 							<td>
-								<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'not_replied'); ?>
+								<?php echo MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'not_replied'); ?>
 								<br />
 								<?php $noReplyUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=not_replied"; ?>
 								<a href="<?php echo $noReplyUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Doesn't Replied to Invitation List">Details</a>
 							</td>
 							
 							<td>
-								<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'attending'); ?>
+								<?php echo MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'attending'); ?>
 								<br />
 								<?php $attendUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=attending"; ?>
 								<a href="<?php echo $attendUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Attending to Invitation List">Details</a>
 							</td>
 							
 							<td>
-								<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'unsure'); ?>
+								<?php echo MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'unsure'); ?>
 								<br />
 								<?php $unsureUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=unsure"; ?>
 								<a href="<?php echo $unsureUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Unsure to come List">Details</a>
 							</td>
 							
 							<td>
-								<?php MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'declined'); ?>
+								<?php echo MactoRSVP_Guest::getInvitedTotal( $ed['event_fb_id'], 'declined'); ?>
 								<br />
 								<?php $declineUrl = admin_url( 'admin-ajax.php', $protocol) . "?action=admin_guest_view&eid=" . $ed['event_id'] . "&rsvp=declined"; ?>
 								<a href="<?php echo $declineUrl; ?>&height=400&width=800" class="thickbox" title="Guest Who Decline to come List">Details</a>
