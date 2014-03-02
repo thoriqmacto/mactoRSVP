@@ -23,7 +23,7 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 */
 	public static function create_tb_event(){
 		// If status != "development" create tb_event and dummy data
-		if(MactoRSVP::plugin_status != "development"){
+		if(MactoRSVP::plugin_status == "production"){
 			self::_create_tb_event();
 		}else{
 			self::_create_tb_event();
@@ -109,7 +109,6 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		return self::_eventEdit($evdbid,$args);			
 	}
 	
-	// protected static function _eventEdit($evdbid = 0,$etype,$fbevid,$fbapid,$fbapsc){
 	protected static function _eventEdit($evdbid, $arrEvent, $printMsg = TRUE){
 		global $wpdb;									
 		
@@ -151,11 +150,13 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		// echo"</pre>";			
 		
 		$result = $wpdb->query($query);		
-				 
-		if( $result != FALSE && $printMsg != FALSE ){
-			return parent::printMsg( "Event successfully updated", TRUE );
-		}else{
-			return parent::printMsg( "Failed update event data", FALSE );			
+		
+		if($printMsg != FALSE){
+			if( $result != FALSE ){
+				return parent::printMsg( "Event successfully updated", TRUE );
+			}else{
+				return parent::printMsg( "Failed update event data", FALSE );			
+			}
 		}
 	}
 	
@@ -251,7 +252,7 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	 * @since 1.0.0
 	 * @access protected
 	 */
-	protected function _eventColumn(){ 
+	protected function _eventColumn(){
 		
 		$default_event_column = array(
 										'event_id' 				=> 'evtid',
@@ -416,10 +417,8 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 	}
 	
 	public static function syncToDB($eventdbid,$arrEvent,$arrGuest){
-		// echo"<pre>";
-		// 	var_dump($arrEvent);
-		// echo"</pre>";
 		$arrEventMap = array(
+			'fbid' => esc_attr( $arrEvent['event_fb_id'] ),
 			'name' => esc_attr( $arrEvent['event_name'] ),
 			'priv' => esc_attr( $arrEvent['event_privacy'] ),
 			'desc' => esc_attr( $arrEvent['event_desc'] ),
@@ -427,11 +426,48 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 			'edtm' => esc_attr( $arrEvent['event_end_time'] ),
 			'eloc' => esc_attr( $arrEvent['event_location'] ),
 			'ehid' => esc_attr( $arrEvent['event_host_id'] )
+		);				
+		
+		$arrGuestKey = array(
+			'gfbid',
+			'gfbun',
+			'gfbnm',
+			'gfbln',
+			'gfbpl',
+			'gfbrs'
 		);
 		
+		foreach($arrGuest as $key => $val){
+			$guest[$key] = explode('|',$val);			
+			
+			foreach($guest[$key] as $gkey => $gval){
+				$guestInfo[$arrGuestKey[$gkey]] = $gval;				
+			}
+			
+			$guest[$key] = $guestInfo;
+		}				
 		
+		$hostUrl = "N/A";
+		$eventFBid = $arrEventMap['fbid'];
 		
-		self::_eventEdit($eventdbid, $arrEventMap, FALSE);
+		foreach($guest as $key => $val){
+			$guestDB_id = MactoRSVP_Guest::getGuestID($key);
+			$additional = array( "ghspl" => $hostUrl, "gfbei" => $eventFBid );
+			$val = array_merge($val,$additional);
+						
+			if( MactoRSVP_Guest::isGuestExist($key) ){																								
+				// echo"<pre>";
+				// 	var_dump($additional);
+				// echo"</pre>";
+				if( MactoRSVP_Guest::isGuestDataChange($guestDB_id, $val) ){					
+					MactoRSVP_Guest::guestUpdate($guestDB_id, $val, FALSE);
+				}
+			}else{
+				$msg = MactoRSVP_Guest::guestAdd($key, $val, TRUE);
+			}
+		}			
+			
+		// self::_eventEdit($eventdbid, $arrEventMap, FALSE);
 		
 		return $msg;
 	}
@@ -537,8 +573,9 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 				$guestRSVP = $guest['rsvp_status'];
 				
 				$guestAll = array_merge( $guestBasic, array( "rsvp_status" => $guestRSVP ) );
-				// $val = implode('|',$guestAll);
-				$val = serialize($guestAll);
+				$val = implode('|',$guestAll);
+				// $val = serialize($guestAll);
+				// $val = json_encode( esc_attr($guestAll) );
 				echo "<input type='hidden' name='guest_" . $guest['id'] . "' value='" . $val . "' />";
 			}
 			

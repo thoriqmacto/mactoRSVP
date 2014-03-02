@@ -18,19 +18,22 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	 *
 	 * @since 1.0.0
 	 * @access protected
-	 * @var string
 	 */
-	protected $guestColumn = array(
-		'guest_id' 				=> 'gid',
-		'guest_fb_id' 			=> 'gfbid',
-		'guest_fb_uname' 		=> 'gfbuname',
-		'guest_fb_name' 		=> 'gfbname',
-		'guest_fb_link' 		=> 'gfblink',
-		'guest_fb_pic_link' 	=> 'gfbpiclink',
-		'guest_hosted_pic_link' => 'gfbhostpiclink',
-		'guest_fb_event_id' 	=> 'gfbeventid',
-		'guest_fb_rsvp' 		=> 'gfbrsvp'
-	);
+	protected function _guestColumn(){
+		$guestColumn = array(
+			'guest_id' 				=> 'gid',
+			'guest_fb_id' 			=> 'gfbid',
+			'guest_fb_uname' 		=> 'gfbuname',
+			'guest_fb_name' 		=> 'gfbname',
+			'guest_fb_link' 		=> 'gfblink',
+			'guest_fb_pic_link' 	=> 'gfbpiclink',
+			'guest_hosted_pic_link' => 'gfbhostpiclink',
+			'guest_fb_event_id' 	=> 'gfbeventid',
+			'guest_fb_rsvp' 		=> 'gfbrsvp'
+		);
+		
+		return $guestColumn;
+	}
 	
 	/**
 	 * Create Guest Tables Wrapper 
@@ -42,16 +45,14 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	 */
 	public static function create_tb_guest(){
 		// If status != "development" create tb_event and dummy data
-		if(MactoRSVP::plugin_status != "development"){
+		if(MactoRSVP::plugin_status == "production"){
 			self::_create_tb_guest();
 		}else{
 			self::_create_tb_guest();
 			self::_insert_dummy_guest();					
 		}		
 	}
-	
-	
-	
+			
 	/**
 	 * Show total number of guests with various RSVP status
 	 * (attending, unsure, declined, not_replied)
@@ -104,6 +105,134 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	public static function getGuestList($event_id,$rsvp =''){
 		return self::_getGuestsBasedOnRSVPStatus($event_id,$rsvp);	
 	}
+		
+	public function isGuestExist($guestFBid){
+		$data = self::_getGuestRow('gfbid',$guestFBid);
+		if($data){
+			return TRUE;
+		}else{
+			return FALSE;	
+		}		
+	}
+	
+	public function isGuestDataChange($guestDBid,$arrNew){
+		$arrOld = self::_getGuestRow('gid',$guestDBid);
+		
+		$compare = array_diff_assoc($arrNew,$arrOld);
+		
+		if( !empty($compare) ){
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	}
+	
+	public static function guestAdd($gstfbid, $args, $printMsg = TRUE){
+		return self::_guestAdd($gstfbid,$args,$printMsg);
+	}
+	
+	protected static function _guestAdd($gstfbid, $arrGuest, $printMsg = TRUE){
+		global $wpdb;		
+		
+		$arrSQL = array(			
+			'gfbid'	=> 'guest_fb_id',
+			'gfbun' => 'guest_fb_uname',
+			'gfbnm'	=> 'guest_fb_name',
+			'gfbln'	=> 'guest_fb_link',
+			'gfbpl'	=> 'guest_fb_pic_link',
+			'ghspl'	=> 'guest_hosted_pic_link',
+			'gfbei'	=> 'guest_fb_event_id',
+			'gfbrs'	=> 'guest_fb_rsvp'
+		);				
+		
+		$strInto = ' (guest_id, ';
+				
+		foreach($arrGuest as $key => $val){
+			$strInto .= $arrSQL[ $key ]; 
+			$strInto .= ', ';
+		}
+
+		$strInto = substr_replace($strInto, ')', -2, 1);		
+				
+		$q = 	"INSERT INTO " . TB_GUEST . 
+				$strInto . " VALUES (0, %s, %s, %s, %s, %s, %s, %s, %s)";		
+		
+		$query = $wpdb->prepare($q,$arrGuest);
+		
+		$result = $wpdb->query($query);					
+		
+		// echo "<pre>";
+		// 	var_dump($query);
+		// echo "</pre>";		
+		
+		if($printMsg != FALSE){
+			if($result != FALSE){
+				return parent::printMsg( $arrGuest['gfbnm'] . " successfully added.", TRUE );
+			}else{
+				return parent::printMsg( "Failed add " . $arrGuest['gfbnm'] . " data", FALSE );			
+			}
+		}	
+	}
+	
+	/**
+	 * Update guest data to Guests table 
+	 *
+	 *
+	 * @since 1.0.0
+	 * @access public
+	 *
+	 * @param string $gstdbid,array $args
+	 * @return string Message 
+	 */
+	public static function guestUpdate($gstdbid = 0,$args, $printMsg = TRUE){
+		return self::_guestUpdate($gstdbid,$args,$printMsg);			
+	}
+	
+	protected static function _guestUpdate($gstdbid, $arrGuest, $printMsg = TRUE){
+		global $wpdb;									
+		
+		$arrSQL = array(			
+			'gfbid'	=> 'guest_fb_id = %s',
+			'gfbun' => 'guest_fb_uname = %s',
+			'gfbnm'	=> 'guest_fb_name = %s',
+			'gfbln'	=> 'guest_fb_link = %s',
+			'gfbpl'	=> 'guest_fb_pic_link = %s',
+			'ghspl'	=> 'guest_hosted_pic_link = %s',
+			'gfbei'	=> 'guest_fb_event_id = %s',
+			'gfbrs'	=> 'guest_fb_rsvp = %s'
+		);
+		
+		$arrSet = '';
+		
+		foreach($arrGuest as $key => $val){
+			$arrSet .= $arrSQL[ $key ];
+			$arrSet .= ", "; 
+		}
+		
+		$arrSet = substr_replace($arrSet, '', -2, 1);
+		
+		$q = "UPDATE " . TB_GUEST . " 
+			SET " . $arrSet . "
+			WHERE guest_id = %d LIMIT 1";												
+		
+		array_push( $arrGuest, $gstdbid );
+				
+		$query = $wpdb->prepare($q,$arrGuest);				
+		
+		// echo"<pre>";
+		// 	var_dump($query);
+		// echo"</pre>";
+		
+		$result = $wpdb->query($query);		
+		
+		if($printMsg != FALSE){
+			if( $result != FALSE ){
+				return parent::printMsg( "Guest successfully updated", TRUE );
+			}else{
+				return parent::printMsg( "Failed update event data", FALSE );			
+			}
+		}
+	}
 	
 	/**
 	 * Create Guest Tables 
@@ -149,7 +278,7 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 		$dummy = array(
 			'guest1' => array(
 				'fbid'	=> '688932041',
-				'fbun' 	=> 'thoriqgrady',
+				'fbun' 	=> 'thoriqmacok',
 				'fbnm' 	=> 'Muhammad Thariq Hadad',
 				'fblk' 	=> 'https://www.facebook.com/thoriqgrady',				
 				'fbpl' 	=> 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-ash1/t5/186785_688932041_1735128465_q.jpg',
@@ -255,6 +384,16 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 		}				
 	}		
 	
+	public function getGuestID($guestFBid){
+		return self::_getGuestID($guestFBid);
+	}
+	
+	protected function _getGuestID($guestFBid){
+		$data = self::_getGuestRow('gfbid',$guestFBid);
+		$guestID = $data['guest_id'];
+		return $guestID;
+	}
+	
 	/**
 	 * Get a row data from Guest table.
 	 *
@@ -268,8 +407,9 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	protected function _getGuestRow($col_name, $criteria){
 		global $wpdb;				
 		
+		$guestColumn = self::_guestColumn();
+		
 		$col_key = array_search($col_name, $guestColumn, TRUE);
-		// $col_selected = $guestColumn[$col_key];
 		
 		if($col_key != FALSE){
 			$q = "SELECT * FROM " . TB_GUEST . " WHERE " . $col_key . " = " . $criteria;
@@ -293,15 +433,13 @@ class MactoRSVP_Guest extends MactoRSVP_Abstract {
 	protected function _getGuestCol($col_retrieve, $col_criteria = '', $criteria = ''){
 		global $wpdb;
 		
-		$col_key_retrieve = array_search($col_retrieve, $guestColumn, TRUE);
+		$guestColumn = self::_guestColumn();
 		
-		// $col_retrieve_selected = $guestColumn[$col_key_retrieve];
+		$col_key_retrieve = array_search($col_retrieve, $guestColumn, TRUE);
 		
 		if( !empty($col_criteria) && !empty($criteria) ){
 			
-			$col_key_criteria = array_search($col_name, $guestColumn, TRUE);
-					
-			// $col_criteria_selected = $guestColumn[$col_key_criteria];		
+			$col_key_criteria = array_search($col_name, $guestColumn, TRUE);		
 				
 			if($col_key_retrieve != FALSE && $col_key_criteria != FALSE){
 				$q = "SELECT " . $col_key_retrieve . " FROM " . TB_GUEST . " WHERE " . $col_key_criteria . " = " . $criteria;

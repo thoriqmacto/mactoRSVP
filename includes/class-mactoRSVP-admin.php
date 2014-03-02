@@ -318,7 +318,7 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 						}
 					}
 				?>
-												
+				<?php $eventData = array_merge( $eventData,array("event_fb_id" => $eventFBid ) ); ?>								
 				<?php $msg = MactoRSVP_Event::syncToDB($eventData['event_db_id'],$eventData,$guestData); ?>
 				
 				<?php self::_admin_printTableEvent(); ?>				
@@ -640,8 +640,6 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	 * @access public
 	 */
 	public static function uninstall() {
-		global $wpdb;
-
 		self::_uninstall();
 	}
 
@@ -654,9 +652,11 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	protected static function _uninstall() {
 		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 
-		// Delete options
-		delete_option( 'theme_my_login' );
-		delete_option( 'widget_theme-my-login' );
+		// Drop Table
+		if( MactoRSVP::plugin_status == 'production' ){
+			$wpdb->query("DROP TABLE IF EXISTS " . TB_EVENT);
+			$wpdb->query("DROP TABLE IF EXISTS " . TB_GUEST);
+		}
 	}
 }
 endif; // Class exists

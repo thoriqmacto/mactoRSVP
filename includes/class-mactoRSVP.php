@@ -26,6 +26,9 @@ class MactoRSVP extends MactoRSVP_Abstract {
 	/**
 	 * Holds plugin status
 	 *
+	 * set 'development' to make the stage in development environment.
+	 * set 'production' to make plugin ready in production environment.
+	 *
 	 * @since 1.0.0
 	 * @access public
 	 * @const string

@@ -49,13 +49,16 @@ function insert_table(){
 	MactoRSVP_Event::create_tb_event();		
 	MactoRSVP_Guest::create_tb_guest();		
 }
-register_activation_hook( __FILE__, 'insert_table' );
 
 function drop_table(){
 	global $wpdb;
 	$wpdb->query("DROP TABLE IF EXISTS " . TB_EVENT);
 	$wpdb->query("DROP TABLE IF EXISTS " . TB_GUEST);
 }
-register_deactivation_hook( __FILE__, 'drop_table' );
+
+if( MactoRSVP::plugin_status == "development" ){
+	register_activation_hook( __FILE__, 'insert_table' );
+	register_deactivation_hook( __FILE__, 'drop_table' );
+}
 
 ?>

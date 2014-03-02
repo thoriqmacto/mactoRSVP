@@ -122,7 +122,7 @@ abstract class MactoRSVP_Abstract {
 		if ( $status == TRUE ): ?>
 			<div id="message" class="updated fade"><p><strong><?php echo $msg; ?></strong></p></div>
 		<?php else: ?>
-			<div id="message" class="error"><p><strong><?php echo $msg; ?></strong></p></div				
+			<div id="message" class="error"><p><strong><?php echo $msg; ?></strong></p></div>				
 		<?php endif; ?>
 	<?php }
 	
