@@ -257,18 +257,22 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	 */
 	public static function admin_event_list(){ ?>
 		<div class="wrap">
-			<h2>
-				<?php echo $heading; ?>				
-			</h2>
+			<?php if(!empty($heading)): ?>
+				<h2>
+					<?php echo $heading; ?>				
+				</h2>
+			<?php endif; ?>
 		
 			<!-- Message -->			
 			<?php echo ( !empty( $msg ) ) ? $msg : ''; ?>		
 			<?php // if( !empty( $_GET['action'] ) ){ echo $_GET['action']; } ?>
 																		
 			<?php if( $_GET['action'] == 'delete' ): ?>
+				<?php $heading = esc_html( __( 'Delete Event', 'macto-rsvp' ) ); ?>
+				<h2>
+					<?php echo $heading; ?>				
+				</h2>
 				<div id="event_delete">
-					<?php $heading = esc_html( __( 'Delete Event', 'macto-rsvp' ) ); ?>
-				
 					<p><?php _e('You are about to delete the following event:','macto-rsvp'); ?></p>				
 				
 					<?php
@@ -284,7 +288,7 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 				
 					<p><?php _e('Are you sure you wish to delete these event?'); ?></p>
 				
-					<form action="" method="POST" style="display:inline;">				
+					<form action="<?php echo admin_url('admin.php?page=mactoRSVP') ?>" method="POST" style="display:inline;">				
 						<?php wp_nonce_field('mactoRSVP_del'); ?>
 						<input type="hidden" name="event_del_id" value="<?php echo $ev_id; ?>" />
 						<input type="submit" name="delete" class="button" value="<?php _e('Yes, Delete these event','macto-rsvp'); ?>" />
