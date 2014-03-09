@@ -31,7 +31,7 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 	 * @access public
 	 */
 	protected function load() {
-		add_action( 'admin_init', array( &$this, 'admin_init' ) );
+		// add_action( 'admin_init', array( &$this, 'admin_init' ) );
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ), 8 );
 		
 		// Add Ajax wrapper for admin event view
@@ -371,7 +371,8 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 
 			<!-- Table Body -->
 			<tbody>
-				<?php if( !empty(MactoRSVP_Event::get_all_event()) ): ?>
+				<?php $all_events = MactoRSVP_Event::get_all_event(); ?>
+				<?php if( !empty($all_events) ): ?>
 					<?php $event_data = MactoRSVP_Event::get_all_event(); ?>
 													
 					<?php foreach( $event_data as $ed ): ?>
@@ -628,10 +629,10 @@ class MactoRSVP_Admin extends MactoRSVP_Abstract {
 		$version = $this->get_option( 'version', MactoRSVP::version );  // get_option($option, default)
 		
 		// Install Event Tables
-		// MactoRSVP_Event::create_tb_event();							
+		MactoRSVP_Event::create_tb_event();							
 		
 		// Install Guest Tables
-		// MactoRSVP_Guest::create_tb_guest();									
+		MactoRSVP_Guest::create_tb_guest();									
 
 		// Setting version
 		$this->set_option( 'version', MactoRSVP::version );						

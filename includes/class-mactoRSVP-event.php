@@ -423,7 +423,9 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 		$fb = self::_FBInstance($fbappid,$fbappsecret);
 		$fb->destroySession();		
 		
-		if( empty($fb->getUser()) ){ 
+		$usr = $fb->getUser();
+		
+		if( empty($usr) ){ 
 			$msg = parent::printMsg( 'Logout Success', TRUE ); 
 		}else{ 
 			$msg = parent::printMsg( 'Logout Failed', FALSE ); 
