@@ -297,10 +297,10 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 			),
 			
 			'event2' => array(
-				'name'	=> 'Nikahan Faisal dan Dena',
+				'name'	=> 'Nikahan',
 				'type' 	=> 'FB',
 				'priv' 	=> 'NOTSYNC',
-				'desc' 	=> 'Ini adalah acara pernikahan Faisal dan Dena',
+				'desc' 	=> 'Ini adalah acara pernikahan',
 				'sttm' 	=> '2014-02-28T15:20:00+0700',
 				'edtm' 	=> '2014-02-28T18:20:00+0700',			
 				'loct' 	=> 'Jakarta',
