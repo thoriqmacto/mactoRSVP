@@ -292,8 +292,8 @@ class MactoRSVP_Event extends MactoRSVP_Abstract {
 				'sbtn' 	=> 'yes',
 				'fbid'	=> '249418241902475',
 				'join'	=> '249418241902474',
-				'fbad'	=> '566267770131392',
-				'fbas'	=> '4d2c0f71e9c5aba80765d30d5282014f'	
+				'fbad'	=> '<secret>',
+				'fbas'	=> '<secret>'	
 			),
 			
 			'event2' => array(
